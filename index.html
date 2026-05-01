@@ -192,879 +192,584 @@
   }
 })();</script>
 <script>window.Intl=window.Intl||{};Intl.t=function(s){return(Intl._locale&&Intl._locale[s])||s;};</script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gsocial</title>
-    <meta name="theme-color" content="#000000">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
-    <!-- PWA Manifest inline -->
-    <link rel="manifest" href='data:application/manifest+json,{"name":"Gsocial","short_name":"Gsocial","start_url":".","display":"standalone","background_color":"#000000","theme_color":"#000000","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 512 512%27%3E%3Crect width=%27512%27 height=%27512%27 rx=%27120%27 fill=%27%23E1306C%27/%3E%3Ctext x=%2750%25%27 y=%2754%25%27 font-size=%27300%27 fill=%27white%27 text-anchor=%27middle%27 font-family=%27Arial%27 font-weight=%27700%27 dy=%27.35em%27%3EG%3C/text%3E%3C/svg%3E","sizes":"512x512","type":"image/svg+xml"}]}'>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Gsocial</title>
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href='data:application/manifest+json,{"name":"Gsocial","short_name":"Gsocial","start_url":".","display":"standalone","background_color":"#ffffff","theme_color":"#ffffff","description":"Clone minimal do Instagram"}'>
 
-    <style>
-        :root {
-            --bg: #000000;
-            --bg-secondary: #121212;
-            --border: #262626;
-            --text: #fafafa;
-            --text-secondary: #a8a8a8;
-            --accent: #0095f6;
-            --gradient: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
-        }
+<style>
+  /* Reset básico */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #fafafa;
+    color: #262626;
+    -webkit-font-smoothing: antialiased;
+  }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
+  /* Container principal - máximo 400px */
+  .app {
+    max-width: 400px;
+    margin: 0 auto;
+    background: #fff;
+    min-height: 100vh;
+    position: relative;
+    border-left: 1px solid #efefef;
+    border-right: 1px solid #efefef;
+  }
 
-        html, body {
-            height: 100%;
-            background: #181818;
-            color: var(--text);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            overscroll-behavior: none;
-        }
+  /* Barra superior */
+  .topbar {
+    height: 60px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #dbdbdb;
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 10;
+  }
 
-        .app-container {
-            max-width: 420px;
-            width: 100%;
-            height: 100vh;
-            margin: 0 auto;
-            background: var(--bg);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 0 40px rgba(0,0,0,0.5);
-        }
+  .logo {
+    font-size: 24px;
+    font-weight: 400;
+    font-family: 'Billabong', cursive, -apple-system;
+    letter-spacing: 0.5px;
+  }
 
-        /* Top Bar */
-        .top-bar {
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 16px;
-            border-bottom: 1px solid var(--border);
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(12px);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            flex-shrink: 0;
-        }
+  .btn-auth {
+    font-size: 13px;
+    padding: 7px 14px;
+    border: none;
+    background: #0095f6;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .btn-auth.out { background: transparent; color: #262626; border: 1px solid #dbdbdb; }
 
-        .logo {
-            font-size: 26px;
-            font-weight: 600;
-            letter-spacing: -0.5px;
-            background: var(--gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
+  /* Tela de login */
+  #login-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: calc(100vh - 60px);
+    padding: 24px;
+    text-align: center;
+    gap: 24px;
+  }
 
-        .icon-btn {
-            background: none;
-            border: none;
-            color: var(--text);
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            border-radius: 50%;
-            transition: background 0.2s;
-        }
-        .icon-btn:active { background: #222; }
-        .icon-btn svg { width: 24px; height: 24px; }
+  .login-title {
+    font-size: 48px;
+    font-weight: 300;
+    margin-bottom: 12px;
+  }
 
-        /* Tela de Login */
-        .login-screen {
-            position: absolute;
-            inset: 0;
-            background: var(--bg);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 32px;
-            z-index: 200;
-            text-align: center;
-        }
+  .login-subtitle {
+    color: #8e8e8e;
+    font-size: 15px;
+    margin-bottom: 24px;
+  }
 
-        .login-screen.hidden { display: none; }
+  .btn-google {
+    background: #0095f6;
+    color: white;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: opacity 0.2s;
+  }
+  .btn-google:active { opacity: 0.8; }
 
-        .login-card {
-            width: 100%;
-            max-width: 320px;
-        }
+  /* Feed */
+  #feed {
+    padding-bottom: 70px;
+    background: #fafafa;
+  }
 
-        .login-logo {
-            font-size: 48px;
-            font-weight: 700;
-            margin-bottom: 12px;
-            background: var(--gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+  /* Card de post - estilo Instagram */
+  .post {
+    background: white;
+    border: 1px solid #dbdbdb;
+    border-radius: 8px;
+    margin: 0 0 12px 0;
+    overflow: hidden;
+  }
 
-        .login-subtitle {
-            color: var(--text-secondary);
-            margin-bottom: 48px;
-            font-size: 16px;
-        }
+  .post-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+  }
 
-        .btn-login {
-            width: 100%;
-            background: var(--text);
-            color: #000;
-            border: none;
-            padding: 14px;
-            border-radius: 12px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            transition: transform 0.1s, opacity 0.2s;
-        }
-        .btn-login:active { transform: scale(0.98); opacity: 0.9; }
-        .btn-login svg { width: 20px; height: 20px; }
+  .post-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #efefef;
+  }
 
-        /* Main App */
-        #app-main {
-            flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-            scrollbar-width: none;
-        }
-        #app-main::-webkit-scrollbar { display: none; }
+  .post-username {
+    font-weight: 600;
+    font-size: 14px;
+  }
 
-        /* Stories */
-        .stories {
-            display: flex;
-            gap: 14px;
-            padding: 16px;
-            overflow-x: auto;
-            border-bottom: 1px solid var(--border);
-            scrollbar-width: none;
-        }
-        .stories::-webkit-scrollbar { display: none; }
+  .post-image {
+    width: 100%;
+    display: block;
+    aspect-ratio: 1/1;
+    object-fit: cover;
+    background: #fafafa;
+  }
 
-        .story {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-            flex-shrink: 0;
-            cursor: pointer;
-        }
+  .post-actions {
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+  }
 
-        .story-ring {
-            width: 66px;
-            height: 66px;
-            border-radius: 50%;
-            padding: 2.5px;
-            background: var(--gradient);
-        }
+  .like-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #262626;
+  }
+  .like-btn:active svg { transform: scale(0.9); }
+  .like-btn svg { width: 24px; height: 24px; transition: transform 0.1s; }
 
-        .story-avatar {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            border: 2.5px solid var(--bg);
-            background: var(--bg-secondary);
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+  .like-count {
+    font-size: 14px;
+    font-weight: 600;
+  }
 
-        .story-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+  .post-caption {
+    padding: 0 12px 12px;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .post-caption strong { font-weight: 600; margin-right: 6px; }
 
-        .story-username {
-            font-size: 12px;
-            color: var(--text-secondary);
-            max-width: 70px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
+  /* Barra inferior - apenas 2 ícones */
+  .bottombar {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 400px;
+    height: 50px;
+    background: white;
+    border-top: 1px solid #dbdbdb;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 10;
+  }
 
-        /* Feed */
-        .feed {
-            padding-bottom: 70px;
-        }
+  .nav-btn {
+    background: none;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    color: #262626;
+    flex: 1;
+    display: flex;
+    justify-content: center;
+  }
+  .nav-btn svg { width: 24px; height: 24px; }
+  .nav-btn:active { opacity: 0.6; }
 
-        .post {
-            border-bottom: 1px solid var(--border);
-            background: var(--bg);
-            margin-bottom: 4px;
-        }
+  /* Modal de criar post */
+  .modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    z-index: 100;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal.show { display: flex; }
 
-        .post-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 16px;
-        }
+  .modal-content {
+    background: white;
+    width: 100%;
+    max-width: 400px;
+    border-radius: 16px 16px 0 0;
+    padding: 16px;
+    animation: slideUp 0.25s ease-out;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
 
-        .post-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            object-fit: cover;
-            background: var(--bg-secondary);
-        }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #efefef;
+  }
+  .modal-title { font-weight: 600; font-size: 16px; }
+  .close-btn { background: none; border: none; font-size: 28px; cursor: pointer; line-height: 1; color: #262626; }
 
-        .post-username {
-            font-weight: 600;
-            font-size: 14px;
-            flex: 1;
-        }
+  .file-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px dashed #dbdbdb;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    cursor: pointer;
+  }
 
-        .post-time {
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
+  .preview {
+    width: 100%;
+    max-height: 320px;
+    object-fit: contain;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    display: none;
+    background: #fafafa;
+  }
 
-        .post-image {
-            width: 100%;
-            aspect-ratio: 1/1;
-            background: var(--bg-secondary);
-            display: block;
-            object-fit: cover;
-        }
+  .caption-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #dbdbdb;
+    border-radius: 8px;
+    font-size: 14px;
+    resize: none;
+    height: 80px;
+    font-family: inherit;
+    margin-bottom: 12px;
+  }
+  .caption-input:focus { outline: none; border-color: #a8a8a8; }
 
-        .post-actions {
-            padding: 12px 16px 8px;
-            display: flex;
-            gap: 16px;
-        }
+  .btn-publish {
+    width: 100%;
+    background: #0095f6;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 15px;
+  }
+  .btn-publish:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        .action-btn {
-            background: none;
-            border: none;
-            color: var(--text);
-            cursor: pointer;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            transition: transform 0.15s;
-        }
-        .action-btn:active { transform: scale(0.9); }
-        .action-btn svg { width: 26px; height: 26px; }
-        .action-btn.liked svg { fill: #ed4956; stroke: #ed4956; color: #ed4956; }
+  .empty-state {
+    text-align: center;
+    padding: 80px 24px;
+    color: #8e8e8e;
+    font-size: 14px;
+  }
 
-        .post-likes {
-            padding: 0 16px 4px;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .post-caption {
-            padding: 0 16px 16px;
-            font-size: 14px;
-            line-height: 1.4;
-        }
-        .post-caption strong { font-weight: 600; margin-right: 6px; }
-
-        /* Bottom Nav */
-        .bottom-nav {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 58px;
-            background: rgba(0,0,0,0.95);
-            backdrop-filter: blur(12px);
-            border-top: 1px solid var(--border);
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding-bottom: env(safe-area-inset-bottom);
-            z-index: 90;
-        }
-
-        .nav-btn {
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            width: 48px;
-            height: 48px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            border-radius: 12px;
-            transition: color 0.2s;
-        }
-        .nav-btn.active { color: var(--text); }
-        .nav-btn svg { width: 26px; height: 26px; }
-
-        .nav-btn-create {
-            background: var(--text);
-            color: #000;
-            border-radius: 14px;
-            width: 44px;
-            height: 34px;
-        }
-
-        /* Profile View */
-        .profile-view {
-            padding: 32px 20px 100px;
-            text-align: center;
-        }
-
-        .profile-pic {
-            width: 96px;
-            height: 96px;
-            border-radius: 50%;
-            margin: 0 auto 16px;
-            border: 3px solid var(--border);
-            object-fit: cover;
-        }
-
-        .profile-name {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 6px;
-        }
-
-        .profile-email {
-            color: var(--text-secondary);
-            font-size: 14px;
-            margin-bottom: 28px;
-        }
-
-        .btn-logout {
-            background: #262626;
-            color: var(--text);
-            border: none;
-            padding: 12px 28px;
-            border-radius: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .btn-logout:active { background: #333; }
-
-        /* Modal Criar */
-        .modal {
-            position: absolute;
-            inset: 0;
-            background: var(--bg);
-            z-index: 300;
-            display: flex;
-            flex-direction: column;
-            transform: translateY(100%);
-            transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-        }
-        .modal.open { transform: translateY(0); }
-
-        .modal-header {
-            height: 56px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 16px;
-            border-bottom: 1px solid var(--border);
-            flex-shrink: 0;
-        }
-
-        .modal-header h3 { font-size: 16px; font-weight: 600; }
-        .modal-header button {
-            background: none;
-            border: none;
-            color: var(--text);
-            font-size: 15px;
-            cursor: pointer;
-            padding: 6px 0;
-        }
-        .modal-header button.primary { color: var(--accent); font-weight: 600; }
-        .modal-header button:disabled { opacity: 0.4; }
-
-        .modal-body {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-        }
-
-        .upload-area {
-            width: 100%;
-            aspect-ratio: 1/1;
-            background: var(--bg-secondary);
-            border: 2px dashed var(--border);
-            border-radius: 16px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            overflow: hidden;
-            position: relative;
-            margin-bottom: 20px;
-        }
-
-        .upload-area img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            position: absolute;
-            inset: 0;
-        }
-
-        .upload-placeholder {
-            text-align: center;
-            color: var(--text-secondary);
-        }
-        .upload-placeholder svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: 0.6; }
-
-        #caption {
-            width: 100%;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 14px;
-            color: var(--text);
-            font-family: inherit;
-            font-size: 15px;
-            resize: none;
-            min-height: 100px;
-        }
-        #caption::placeholder { color: var(--text-secondary); }
-        #caption:focus { outline: none; border-color: #444; }
-
-        .hidden { display: none !important; }
-
-        .empty-feed {
-            text-align: center;
-            padding: 80px 40px;
-            color: var(--text-secondary);
-        }
-        .empty-feed svg { width: 64px; height: 64px; opacity: 0.3; margin-bottom: 16px; }
-    </style>
+  /* Esconde elementos */
+  .hidden { display: none !important; }
+</style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Top Bar -->
-        <header class="top-bar">
-            <h1 class="logo">Gsocial</h1>
-            <button id="btn-auth-top" class="icon-btn" title="Sair" style="display:none">
-                <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"/>
-                </svg>
-            </button>
-        </header>
+  <div class="app">
+    <!-- Barra superior -->
+    <header class="topbar">
+      <h1 class="logo">Gsocial</h1>
+      <button id="authBtn" class="btn-auth">Entrar</button>
+    </header>
 
-        <!-- Tela de Login -->
-        <div id="login-screen" class="login-screen">
-            <div class="login-card">
-                <div class="login-logo">Gsocial</div>
-                <p class="login-subtitle">Compartilhe momentos com seus amigos</p>
-                <button id="btn-login" class="btn-login">
-                    <svg viewBox="0 0 24 24" width="20" height="20">
-                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                    </svg>
-                    Entrar com Google
-                </button>
-            </div>
+    <main>
+      <!-- Tela de login -->
+      <div id="login-screen">
+        <div>
+          <h2 class="login-title">Gsocial</h2>
+          <p class="login-subtitle">Compartilhe momentos simples</p>
         </div>
+        <button id="googleLogin" class="btn-google">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="white"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="white"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="white"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="white"/></svg>
+          Entrar com Google
+        </button>
+      </div>
 
-        <!-- App Principal -->
-        <main id="app-main" class="hidden">
-            <!-- View Home -->
-            <section id="view-home">
-                <!-- Stories -->
-                <div class="stories">
-                    <div class="story">
-                        <div class="story-ring">
-                            <div class="story-avatar">
-                                <img id="my-story-avatar" src="" alt="Você">
-                            </div>
-                        </div>
-                        <span class="story-username">Seu story</span>
-                    </div>
-                    <!-- Stories estáticos -->
-                    <div class="story">
-                        <div class="story-ring"><div class="story-avatar"><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='66' height='66'%3E%3Crect width='66' height='66' fill='%23222'/%3E%3Ctext x='33' y='40' text-anchor='middle' fill='%23fff' font-size='26' font-family='Arial'%3EA%3C/text%3E%3C/svg%3E"></div></div>
-                        <span class="story-username">ana</span>
-                    </div>
-                    <div class="story">
-                        <div class="story-ring"><div class="story-avatar"><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='66' height='66'%3E%3Crect width='66' height='66' fill='%23222'/%3E%3Ctext x='33' y='40' text-anchor='middle' fill='%23fff' font-size='26' font-family='Arial'%3EB%3C/text%3E%3C/svg%3E"></div></div>
-                        <span class="story-username">bruno</span>
-                    </div>
-                    <div class="story">
-                        <div class="story-ring"><div class="story-avatar"><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='66' height='66'%3E%3Crect width='66' height='66' fill='%23222'/%3E%3Ctext x='33' y='40' text-anchor='middle' fill='%23fff' font-size='26' font-family='Arial'%3EC%3C/text%3E%3C/svg%3E"></div></div>
-                        <span class="story-username">carla</span>
-                    </div>
-                    <div class="story">
-                        <div class="story-ring"><div class="story-avatar"><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='66' height='66'%3E%3Crect width='66' height='66' fill='%23222'/%3E%3Ctext x='33' y='40' text-anchor='middle' fill='%23fff' font-size='26' font-family='Arial'%3ED%3C/text%3E%3C/svg%3E"></div></div>
-                        <span class="story-username">diego</span>
-                    </div>
-                </div>
+      <!-- Feed de posts -->
+      <div id="feed" class="hidden"></div>
+    </main>
 
-                <!-- Feed -->
-                <div id="feed" class="feed">
-                    <div class="empty-feed">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                        </svg>
-                        <p>Nenhuma publicação ainda.<br>Seja o primeiro a postar!</p>
-                    </div>
-                </div>
-            </section>
+    <!-- Barra inferior com apenas 2 ícones -->
+    <nav class="bottombar hidden" id="bottombar">
+      <button class="nav-btn" id="homeBtn" title="Home">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </button>
+      <button class="nav-btn" id="createBtn" title="Criar">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </nav>
+  </div>
 
-            <!-- View Perfil -->
-            <section id="view-profile" class="profile-view hidden">
-                <img id="profile-pic" class="profile-pic" src="" alt="Foto">
-                <div id="profile-name" class="profile-name">Usuário</div>
-                <div id="profile-email" class="profile-email"></div>
-                <button id="btn-logout" class="btn-logout">Sair da conta</button>
-            </section>
-        </main>
-
-        <!-- Bottom Navigation -->
-        <nav id="bottom-nav" class="bottom-nav hidden">
-            <button class="nav-btn active" data-view="home" title="Início">
-                <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/>
-                </svg>
-            </button>
-            <button id="btn-create" class="nav-btn nav-btn-create" title="Criar">
-                <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-                </svg>
-            </button>
-            <button class="nav-btn" data-view="profile" title="Perfil">
-                <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
-                </svg>
-            </button>
-        </nav>
-
-        <!-- Modal Criar Post -->
-        <div id="modal-create" class="modal">
-            <div class="modal-header">
-                <button id="btn-close-modal">Cancelar</button>
-                <h3>Nova publicação</h3>
-                <button id="btn-publish" class="primary" disabled>Publicar</button>
-            </div>
-            <div class="modal-body">
-                <label class="upload-area" for="input-file">
-                    <input type="file" id="input-file" accept="image/*" capture="environment" hidden>
-                    <img id="preview" class="hidden" alt="Preview">
-                    <div id="upload-placeholder" class="upload-placeholder">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 16.5v2.25A2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
-                        </svg>
-                        <div>Toque para adicionar foto</div>
-                    </div>
-                </label>
-                <textarea id="caption" placeholder="Escreva uma legenda..." maxlength="2200"></textarea>
-            </div>
-        </div>
+  <!-- Modal para criar post -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title">Nova publicação</span>
+        <button class="close-btn" id="closeModal">&times;</button>
+      </div>
+      
+      <input type="file" id="fileInput" class="file-input" accept="image/*">
+      <img id="preview" class="preview" alt="Prévia">
+      <textarea id="captionInput" class="caption-input" placeholder="Escreva uma legenda..."></textarea>
+      <button id="publishBtn" class="btn-publish" disabled>Publicar</button>
     </div>
+  </div>
 
-    <script type="module">
-        // IMPORTAÇÕES DO FIREBASE via CDN
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+<script type="module">
+  // Importa Firebase via CDN ES modules
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, doc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-        // CONFIGURAÇÃO FIREBASE
-        const firebaseConfig = {
-            apiKey: "AIzaSyD7w1covFc9VSa1kmjyEw5iTuAxLu2Raf8",
-            authDomain: "g-app-social.firebaseapp.com",
-            projectId: "g-app-social",
-            storageBucket: "g-app-social.firebasestorage.app",
-            messagingSenderId: "526544172649",
-            appId: "1:526544172649:web:5ac6f0ab0c9f84f98854f8",
-            measurementId: "G-NRZ98ZXBWW"
-        };
+  // Configuração do Firebase
+  const firebaseConfig = { 
+    apiKey: "AIzaSyD7w1covFc9VSa1kmjyEw5iTuAxLu2Raf8", 
+    authDomain: "g-app-social.firebaseapp.com", 
+    projectId: "g-app-social", 
+    storageBucket: "g-app-social.firebasestorage.app", 
+    messagingSenderId: "526544172649", 
+    appId: "1:526544172649:web:5ac6f0ab0c9f84f98854f8" 
+  };
 
-        // INICIALIZA FIREBASE
-        const app = initializeApp(firebaseConfig);
-        try { getAnalytics(app); } catch(e) {}
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const storage = getStorage(app);
-        const provider = new GoogleAuthProvider();
+  // Inicializa Firebase
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const storage = getStorage(app);
+  const provider = new GoogleAuthProvider();
 
-        // ELEMENTOS DOM
-        const loginScreen = document.getElementById('login-screen');
-        const appMain = document.getElementById('app-main');
-        const bottomNav = document.getElementById('bottom-nav');
-        const btnLogin = document.getElementById('btn-login');
-        const btnAuthTop = document.getElementById('btn-auth-top');
-        const btnLogout = document.getElementById('btn-logout');
-        const feed = document.getElementById('feed');
-        const modal = document.getElementById('modal-create');
-        const btnCreate = document.getElementById('btn-create');
-        const btnCloseModal = document.getElementById('btn-close-modal');
-        const btnPublish = document.getElementById('btn-publish');
-        const inputFile = document.getElementById('input-file');
-        const preview = document.getElementById('preview');
-        const uploadPlaceholder = document.getElementById('upload-placeholder');
-        const caption = document.getElementById('caption');
-        const profilePic = document.getElementById('profile-pic');
-        const profileName = document.getElementById('profile-name');
-        const profileEmail = document.getElementById('profile-email');
-        const myStoryAvatar = document.getElementById('my-story-avatar');
+  // Elementos da interface
+  const authBtn = document.getElementById('authBtn');
+  const googleLogin = document.getElementById('googleLogin');
+  const loginScreen = document.getElementById('login-screen');
+  const feed = document.getElementById('feed');
+  const bottombar = document.getElementById('bottombar');
+  const createBtn = document.getElementById('createBtn');
+  const homeBtn = document.getElementById('homeBtn');
+  const modal = document.getElementById('modal');
+  const closeModal = document.getElementById('closeModal');
+  const fileInput = document.getElementById('fileInput');
+  const preview = document.getElementById('preview');
+  const captionInput = document.getElementById('captionInput');
+  const publishBtn = document.getElementById('publishBtn');
 
-        let currentUser = null;
-        let selectedFile = null;
-        let unsubscribeFeed = null;
+  let currentUser = null;
+  let unsubscribeFeed = null;
 
-        // LOGIN COM GOOGLE
-        btnLogin.onclick = async () => {
-            try {
-                await signInWithPopup(auth, provider);
-            } catch (err) {
-                alert('Erro ao entrar: ' + err.message);
-            }
-        };
+  // Observa estado de autenticação
+  onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+    if (user) {
+      // Usuário logado - mostra feed
+      loginScreen.classList.add('hidden');
+      feed.classList.remove('hidden');
+      bottombar.classList.remove('hidden');
+      authBtn.textContent = 'Sair';
+      authBtn.classList.add('out');
+      carregarFeed();
+    } else {
+      // Usuário deslogado - mostra login
+      loginScreen.classList.remove('hidden');
+      feed.classList.add('hidden');
+      bottombar.classList.add('hidden');
+      authBtn.textContent = 'Entrar';
+      authBtn.classList.remove('out');
+      if (unsubscribeFeed) unsubscribeFeed();
+    }
+  });
 
-        // LOGOUT
-        const doLogout = () => signOut(auth);
-        btnAuthTop.onclick = doLogout;
-        btnLogout.onclick = doLogout;
+  // Função de login com Google
+  async function entrar() {
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (e) {
+      alert('Erro ao entrar: ' + e.message);
+    }
+  }
 
-        // OBSERVA ESTADO DE AUTENTICAÇÃO
-        onAuthStateChanged(auth, (user) => {
-            currentUser = user;
-            if (user) {
-                // Usuário logado
-                loginScreen.classList.add('hidden');
-                appMain.classList.remove('hidden');
-                bottomNav.classList.remove('hidden');
-                btnAuthTop.style.display = 'flex';
-                
-                // Atualiza perfil
-                profilePic.src = user.photoURL || '';
-                profileName.textContent = user.displayName || 'Usuário';
-                profileEmail.textContent = user.email || '';
-                myStoryAvatar.src = user.photoURL || '';
+  googleLogin.addEventListener('click', entrar);
+  authBtn.addEventListener('click', () => {
+    if (currentUser) {
+      signOut(auth);
+    } else {
+      entrar();
+    }
+  });
 
-                // Inicia feed em tempo real
-                startFeed();
-            } else {
-                // Usuário deslogado
-                loginScreen.classList.remove('hidden');
-                appMain.classList.add('hidden');
-                bottomNav.classList.add('hidden');
-                btnAuthTop.style.display = 'none';
-                
-                if (unsubscribeFeed) {
-                    unsubscribeFeed();
-                    unsubscribeFeed = null;
-                }
-                feed.innerHTML = '';
-            }
-        });
+  // Carrega feed em tempo real
+  function carregarFeed() {
+    const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
+    
+    if (unsubscribeFeed) unsubscribeFeed();
+    
+    unsubscribeFeed = onSnapshot(q, (snapshot) => {
+      feed.innerHTML = '';
+      
+      if (snapshot.empty) {
+        feed.innerHTML = '<div class="empty-state">Nenhuma publicação ainda.<br>Seja o primeiro a postar!</div>';
+        return;
+      }
 
-        // INICIA FEED EM TEMPO REAL
-        function startFeed() {
-            const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
-            
-            unsubscribeFeed = onSnapshot(q, (snapshot) => {
-                if (snapshot.empty) {
-                    feed.innerHTML = `<div class="empty-feed">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                        <p>Nenhuma publicação ainda.<br>Seja o primeiro a postar!</p>
-                    </div>`;
-                    return;
-                }
-                
-                feed.innerHTML = '';
-                snapshot.forEach((docSnap) => {
-                    const post = docSnap.data();
-                    const postEl = createPostElement(docSnap.id, post);
-                    feed.appendChild(postEl);
-                });
-            });
-        }
+      snapshot.forEach((docSnap) => {
+        const post = docSnap.data();
+        const postId = docSnap.id;
+        
+        // Cria card do post
+        const article = document.createElement('article');
+        article.className = 'post';
+        article.innerHTML = `
+          <div class="post-header">
+            <img src="${post.userPhoto || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(post.username)}" class="post-avatar" alt="">
+            <span class="post-username">${post.username}</span>
+          </div>
+          <img src="${post.imageURL}" class="post-image" loading="lazy" alt="">
+          <div class="post-actions">
+            <button class="like-btn" data-id="${postId}">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+              <span class="like-count">${post.likes || 0}</span>
+            </button>
+          </div>
+          <div class="post-caption">
+            <strong>${post.username}</strong>${post.caption ? ' ' + escapeHtml(post.caption) : ''}
+          </div>
+        `;
+        
+        feed.appendChild(article);
+      });
 
-        // CRIA ELEMENTO DE POST
-        function createPostElement(id, data) {
-            const div = document.createElement('div');
-            div.className = 'post';
-            const time = data.createdAt?.toDate ? 
-                new Date(data.createdAt.toDate()).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : 
-                'agora';
-            
-            div.innerHTML = `
-                <div class="post-header">
-                    <img class="post-avatar" src="${data.userPhoto || ''}" alt="">
-                    <span class="post-username">${data.username || 'usuário'}</span>
-                    <span class="post-time">${time}</span>
-                </div>
-                <img class="post-image" src="${data.imageURL}" alt="Post" loading="lazy">
-                <div class="post-actions">
-                    <button class="action-btn btn-like" data-id="${id}">
-                        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12s9-4.78 9-12z"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="post-likes">${data.likes || 0} curtidas</div>
-                <div class="post-caption"><strong>${data.username || ''}</strong>${data.caption ? ' ' + escapeHtml(data.caption) : ''}</div>
-            `;
-            
-            // Botão curtir
-            const likeBtn = div.querySelector('.btn-like');
-            likeBtn.onclick = async () => {
-                try {
-                    await updateDoc(doc(db, "posts", id), {
-                        likes: increment(1)
-                    });
-                    likeBtn.classList.add('liked');
-                    setTimeout(() => likeBtn.classList.remove('liked'), 300);
-                } catch (e) {
-                    console.error('Erro ao curtir:', e);
-                }
-            };
-            
-            return div;
-        }
+      // Adiciona eventos de like
+      document.querySelectorAll('.like-btn').forEach(btn => {
+        btn.addEventListener('click', () => curtirPost(btn.dataset.id));
+      });
+    });
+  }
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
+  // Função para curtir post - incrementa likes
+  async function curtirPost(postId) {
+    if (!currentUser) return;
+    try {
+      const postRef = doc(db, 'posts', postId);
+      await updateDoc(postRef, {
+        likes: increment(1)
+      });
+    } catch (e) {
+      console.error('Erro ao curtir:', e);
+    }
+  }
 
-        // NAVEGAÇÃO BOTTOM
-        document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
-            btn.onclick = () => {
-                const view = btn.dataset.view;
-                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                
-                document.getElementById('view-home').classList.toggle('hidden', view !== 'home');
-                document.getElementById('view-profile').classList.toggle('hidden', view !== 'profile');
-            };
-        });
+  // Abre modal de criar
+  createBtn.addEventListener('click', () => {
+    if (!currentUser) return;
+    modal.classList.add('show');
+  });
 
-        // ABRIR MODAL CRIAR
-        btnCreate.onclick = () => {
-            modal.classList.add('open');
-            btnPublish.disabled = true;
-        };
+  // Fecha modal
+  closeModal.addEventListener('click', fecharModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) fecharModal();
+  });
 
-        btnCloseModal.onclick = closeModal;
+  function fecharModal() {
+    modal.classList.remove('show');
+    fileInput.value = '';
+    preview.style.display = 'none';
+    preview.src = '';
+    captionInput.value = '';
+    publishBtn.disabled = true;
+  }
 
-        function closeModal() {
-            modal.classList.remove('open');
-            selectedFile = null;
-            preview.src = '';
-            preview.classList.add('hidden');
-            uploadPlaceholder.classList.remove('hidden');
-            caption.value = '';
-            inputFile.value = '';
-            btnPublish.disabled = true;
-        }
+  // Preview da imagem
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = 'block';
+      publishBtn.disabled = false;
+    } else {
+      preview.style.display = 'none';
+      publishBtn.disabled = true;
+    }
+  });
 
-        // SELECIONAR IMAGEM
-        inputFile.onchange = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            selectedFile = file;
-            preview.src = URL.createObjectURL(file);
-            preview.classList.remove('hidden');
-            uploadPlaceholder.classList.add('hidden');
-            btnPublish.disabled = false;
-        };
+  // Publicar post
+  publishBtn.addEventListener('click', async () => {
+    const file = fileInput.files[0];
+    const caption = captionInput.value.trim();
+    
+    if (!file || !currentUser) return;
+    
+    publishBtn.disabled = true;
+    publishBtn.textContent = 'Publicando...';
 
-        // COMPRIMIR IMAGEM PARA WEBP
-        async function compressImage(file, maxSize = 1080) {
-            const bitmap = await createImageBitmap(file);
-            let { width, height } = bitmap;
-            
-            if (width > height && width > maxSize) {
-                height = Math.round(height * maxSize / width);
-                width = maxSize;
-            } else if (height > maxSize) {
-                width = Math.round(width * maxSize / height);
-                height = maxSize;
-            }
-            
-            const canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(bitmap, 0, 0, width, height);
-            bitmap.close();
-            
-            return new Promise(resolve => {
-                canvas.toBlob(blob => resolve(blob), 'image/webp', 0.8);
-            });
-        }
+    try {
+      // Faz upload da imagem para Storage
+      const filePath = `posts/${currentUser.uid}/${Date.now()}_${file.name}`;
+      const storageRef = ref(storage, filePath);
+      await uploadBytes(storageRef, file);
+      const imageURL = await getDownloadURL(storageRef);
 
-        // PUBLICAR POST
-        btnPublish.onclick = async () => {
-            if (!selectedFile || !currentUser) return;
-            
-            btnPublish.disabled = true;
-            btnPublish.textContent = 'Publicando...';
-            
-            try {
-                // Comprime imagem
-                const compressed = await compressImage(selectedFile);
-                
-                // Upload para Storage
-                const path = `posts/${currentUser.uid}/${Date.now()}.webp`;
-                const storageRef = ref(storage, path);
-                await uploadBytes(storageRef, compressed);
-                const imageURL = await getDownloadURL(storageRef);
-                
-                // Salva no Firestore
-                await addDoc(collection(db, "posts"), {
-                    uid: currentUser.uid,
-                    username: currentUser.displayName,
-                    userPhoto: currentUser.photoURL,
-                    imageURL,
-                    caption: caption.value.trim(),
-                    likes: 0,
-                    createdAt: serverTimestamp()
-                });
-                
-                closeModal();
-                // Volta para home
-                document.querySelector('[data-view="home"]').click();
-                
-            } catch (err) {
-                console.error(err);
-                alert('Erro ao publicar: ' + err.message);
-            } finally {
-                btnPublish.disabled = false;
-                btnPublish.textContent = 'Publicar';
-            }
-        };
+      // Salva dados no Firestore
+      await addDoc(collection(db, 'posts'), {
+        uid: currentUser.uid,
+        username: currentUser.displayName || 'Usuário',
+        userPhoto: currentUser.photoURL || '',
+        imageURL: imageURL,
+        caption: caption,
+        likes: 0,
+        createdAt: serverTimestamp()
+      });
 
-        // Fecha modal com ESC
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && modal.classList.contains('open')) {
-                closeModal();
-            }
-        });
-    </script>
+      fecharModal();
+      // Scroll para o topo
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (e) {
+      alert('Erro ao publicar: ' + e.message);
+      publishBtn.disabled = false;
+    } finally {
+      publishBtn.textContent = 'Publicar';
+    }
+  });
+
+  // Botão home - volta ao topo
+  homeBtn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // Função auxiliar para escapar HTML
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+</script>
 </body>
 </html>
