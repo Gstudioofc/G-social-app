@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<!-- Playables SDK -->
+<script>// Playables SDK v1.0.0
+// Game lifecycle bridge: rAF-based game-ready detection + event communication
+(function() {
+  'use strict';
+
+  // Idempotency: skip if already initialized (e.g., server-side injection
+  // followed by client-side inject-javascript via the Bloks webview component).
+  if (window.playablesSDK) return;
+
+  var HANDLER_NAME = 'playablesGameEventHandler';
+  var ANDROID_BRIDGE_NAME = '_MetaPlayablesBridge';
+  var RAF_FRAME_THRESHOLD = 3;
+
+  var gameReadySent = false;
+  var firstInteractionSent = false;
+  var errorSent = false;
+  var frameCount = 0;
+  var originalRAF = window.requestAnimationFrame;
+
+  // --- Transport Layer ---
+
+  function hasIOSBridge() {
+    return !!(window.webkit &&
+              window.webkit.messageHandlers &&
+              window.webkit.messageHandlers[HANDLER_NAME]);
+  }
+
+  function hasAndroidBridge() {
+    return !!(window[ANDROID_BRIDGE_NAME] &&
+              typeof window[ANDROID_BRIDGE_NAME].postEvent === 'function');
+  }
+
+  function isInIframe() {
+    return !!(window.parent && window.parent !== window);
+  }
+
+  function sendEvent(eventName, payload) {
+    var message = {
+      type: eventName,
+      payload: payload || {},
+      timestamp: Date.now()
+    };
+
+    if (hasIOSBridge()) {
+      try {
+        window.webkit.messageHandlers[HANDLER_NAME].postMessage(message);
+      } catch (e) { /* ignore */ }
+      return;
+    }
+
+    if (hasAndroidBridge()) {
+    try {
+      var p = payload || {};
+      p.__secureToken = window.__fbAndroidBridgeAuthToken || '';
+      p.timestamp = message.timestamp;
+      window[ANDROID_BRIDGE_NAME].postEvent(
+        eventName,
+        JSON.stringify(p)
+      );
+    } catch (e) { /* ignore */ }
+    return;
+  }
+
+    if (isInIframe()) {
+      try {
+        window.parent.postMessage(message, '*');
+      } catch (e) { /* ignore */ }
+      return;
+    }
+  }
+
+  // --- rAF Game-Ready Detection ---
+
+  function onFrame() {
+    if (gameReadySent) return;
+
+    frameCount++;
+    if (frameCount >= RAF_FRAME_THRESHOLD) {
+      gameReadySent = true;
+      sendEvent('game_ready', {
+        frame_count: frameCount,
+        detected_at: Date.now()
+      });
+      return;
+    }
+
+    originalRAF.call(window, onFrame);
+  }
+
+  if (originalRAF) {
+    window.requestAnimationFrame = function(callback) {
+      if (!gameReadySent) {
+        return originalRAF.call(window, function(timestamp) {
+          frameCount++;
+          if (frameCount >= RAF_FRAME_THRESHOLD && !gameReadySent) {
+            gameReadySent = true;
+            sendEvent('game_ready', {
+              frame_count: frameCount,
+              detected_at: Date.now()
+            });
+          }
+          callback(timestamp);
+        });
+      }
+      return originalRAF.call(window, callback);
+    };
+  }
+
+  // --- First User Interaction Detection ---
+
+  function setupFirstInteractionDetection() {
+    var events = ['touchstart', 'mousedown', 'keydown'];
+
+    function onFirstInteraction() {
+      if (firstInteractionSent) return;
+      firstInteractionSent = true;
+      sendEvent('user_interaction_start', null);
+
+      for (var i = 0; i < events.length; i++) {
+        document.removeEventListener(events[i], onFirstInteraction, true);
+      }
+    }
+
+    for (var i = 0; i < events.length; i++) {
+      document.addEventListener(events[i], onFirstInteraction, true);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupFirstInteractionDetection);
+  } else {
+    setupFirstInteractionDetection();
+  }
+
+  // --- Auto Error Capture ---
+
+  window.addEventListener('error', function(event) {
+    if (errorSent) return;
+    errorSent = true;
+    sendEvent('error', {
+      message: event.message || 'Unknown error',
+      source: event.filename || '',
+      lineno: event.lineno || 0,
+      colno: event.colno || 0,
+      auto_captured: true
+    });
+  });
+
+  window.addEventListener('unhandledrejection', function(event) {
+    if (errorSent) return;
+    errorSent = true;
+    var reason = event.reason;
+    sendEvent('error', {
+      message: (reason instanceof Error) ? reason.message : String(reason),
+      type: 'unhandled_promise_rejection',
+      auto_captured: true
+    });
+  });
+
+  // --- Public API ---
+
+  window.playablesSDK = {
+    complete: function(score) {
+      sendEvent('game_ended', {
+        score: score,
+        completed: true
+      });
+    },
+
+    error: function(message) {
+      if (errorSent) return;
+      errorSent = true;
+      sendEvent('error', {
+        message: message || 'Unknown error',
+        auto_captured: false
+      });
+    },
+
+    sendEvent: function(eventName, payload) {
+      if (!eventName || typeof eventName !== 'string') return;
+      sendEvent(eventName, payload);
+    }
+  };
+
+  // Kick off rAF detection in case no game code calls rAF immediately
+  if (originalRAF) {
+    originalRAF.call(window, onFrame);
+  }
+})();</script>
+<script>window.Intl=window.Intl||{};Intl.t=function(s){return(Intl._locale&&Intl._locale[s])||s;};</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Gsocial</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<link rel="manifest" id="manifest">
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #fafafa;
+    --card: #ffffff;
+    --text: #262626;
+    --text2: #8e8e8e;
+    --border: #dbdbdb;
+    --accent: #0095f6;
+    --red: #ed4956;
+    --story: conic-gradient(#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #000000;
+      --bg2: #000000;
+      --card: #000000;
+      --text: #f5f5f5;
+      --text2: #a8a8a8;
+      --border: #262626;
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #111;
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+  }
+  .app {
+    width: 100%;
+    max-width: 420px;
+    height: 100dvh;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 40px rgba(0,0,0,.2);
+  }
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
+    background: color-mix(in srgb, var(--bg) 85%, transparent);
+    backdrop-filter: saturate(180%) blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    background: linear-gradient(45deg, #f9a825, #f03861, #b12db3);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .top-icons { display: flex; gap: 18px; }
+  .icon-btn { background: none; border: 0; padding: 0; width: 26px; height: 26px; color: var(--text); cursor: pointer; }
+
+  main { flex: 1; overflow-y: auto; overflow-x: hidden; background: var(--bg2); scrollbar-width: none; }
+  main::-webkit-scrollbar { display: none; }
+
+  .view { display: block; }
+  .view[hidden] { display: none !important; }
+
+  /* Stories */
+  .stories {
+    display: flex;
+    gap: 14px;
+    padding: 12px 16px;
+    overflow-x: auto;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    scrollbar-width: none;
+  }
+  .stories::-webkit-scrollbar { display: none; }
+  .story { text-align: center; width: 66px; flex-shrink: 0; cursor: pointer; }
+  .story-ring {
+    width: 66px; height: 66px; border-radius: 50%; padding: 2.5px;
+    background: var(--story);
+  }
+  .story-ring.seen { background: var(--border); }
+  .story-ring.you { background: #ddd; }
+  @media (prefers-color-scheme: dark) { .story-ring.you { background: #333; } }
+  .story img {
+    width: 100%; height: 100%; border-radius: 50%; border: 3px solid var(--bg); object-fit: cover; background: #eee;
+  }
+  .story span { font-size: 12px; color: var(--text2); display: block; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Feed */
+  .feed { padding-bottom: 90px; }
+  .post {
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+  .post-head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+  .post-head img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+  .post-user { flex: 1; line-height: 1.15; }
+  .post-user strong { font-size: 14px; font-weight: 600; display: block; }
+  .post-user small { font-size: 12px; color: var(--text2); }
+
+  .post-img-wrap { position: relative; background: #000; overflow: hidden; }
+  .post-img { width: 100%; aspect-ratio: 4/5; object-fit: cover; display: block; background: #222; }
+  .heart-burst { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; opacity: 0; }
+  .heart-burst.show { animation: heartPop .9s ease; }
+  @keyframes heartPop { 0%{opacity:0; transform:scale(0)} 15%{opacity:1; transform:scale(1.2)} 30%{transform:scale(1)} 80%{opacity:1} 100%{opacity:0; transform:scale(1)} }
+
+  .post-actions { display: flex; align-items: center; gap: 16px; padding: 10px 12px; }
+  .post-actions button { background: none; border: 0; padding: 0; width: 26px; height: 26px; color: var(--text); cursor: pointer; }
+  .post-actions button.save { margin-left: auto; }
+  .like-btn.liked svg { fill: var(--red); stroke: var(--red); animation: pop .25s ease; }
+  @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.3)} 100%{transform:scale(1)} }
+
+  .post-info { padding: 0 12px 12px; font-size: 14px; }
+  .likes { font-weight: 600; margin-bottom: 4px; }
+  .caption strong { font-weight: 600; margin-right: 6px; }
+  .time { color: var(--text2); font-size: 12px; margin-top: 6px; text-transform: uppercase; letter-spacing: .3px; }
+
+  /* Bottom nav */
+  nav.bottom {
+    position: absolute; bottom: 0; left: 0; right: 0; z-index: 50;
+    display: flex; justify-content: space-around; align-items: center;
+    height: calc(50px + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter: saturate(180%) blur(12px);
+    border-top: 1px solid var(--border);
+  }
+  .nav-btn { flex: 1; height: 50px; display: grid; place-items: center; background: none; border: 0; color: var(--text2); cursor: pointer; }
+  .nav-btn.active { color: var(--text); }
+  .nav-btn svg { width: 26px; height: 26px; }
+  .nav-btn.create svg { width: 28px; height: 28px; }
+
+  /* Search */
+  .search-bar { padding: 10px 12px; background: var(--bg); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 5; }
+  .search-bar input { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; font-size: 15px; color: var(--text); outline: none; }
+  .grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 2px; padding-bottom: 90px; background: var(--bg); }
+  .grid img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; background: #ddd; cursor: pointer; }
+
+  /* Reels */
+  .reels { height: 100%; overflow-y: scroll; scroll-snap-type: y mandatory; background: #000; }
+  .reel { position: relative; height: calc(100dvh - 50px); scroll-snap-align: start; }
+  .reel img, .reel video { width: 100%; height: 100%; object-fit: cover; }
+  .reel-ui { position: absolute; right: 10px; bottom: 90px; display: flex; flex-direction: column; gap: 20px; align-items: center; color: white; }
+  .reel-ui button { background: none; border: 0; color: white; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; }
+  .reel-ui svg { width: 30px; height: 30px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+  .reel-info { position: absolute; left: 12px; bottom: 90px; right: 70px; color: white; text-shadow: 0 1px 2px rgba(0,0,0,.7); font-size: 14px; }
+
+  /* Profile */
+  .profile-head { background: var(--bg); padding: 16px; border-bottom: 1px solid var(--border); }
+  .profile-top { display: flex; gap: 20px; align-items: center; }
+  .profile-top img { width: 86px; height: 86px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border); }
+  .stats { display: flex; flex: 1; justify-content: space-around; text-align: center; }
+  .stats strong { display: block; font-size: 18px; }
+  .stats span { font-size: 13px; color: var(--text2); }
+  .profile-name { margin-top: 12px; font-weight: 600; }
+  .profile-bio { font-size: 14px; margin-top: 4px; white-space: pre-line; }
+  .profile-actions { display: flex; gap: 8px; margin-top: 12px; }
+  .btn { flex: 1; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 7px; font-weight: 600; font-size: 14px; color: var(--text); cursor: pointer; }
+
+  /* Modal */
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.65); display: none; place-items: center; z-index: 100; padding: 16px; }
+  .modal.show { display: grid; }
+  .modal-card { width: 100%; max-width: 380px; background: var(--card); border-radius: 16px; overflow: hidden; animation: up .25s ease; }
+  @keyframes up { from{transform:translateY(20px); opacity:0} to{transform:none; opacity:1} }
+  .modal-head { padding: 12px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; font-weight: 600; }
+  .modal-body { padding: 14px; }
+  .preview { width: 100%; aspect-ratio: 4/5; background: var(--bg2); border-radius: 12px; overflow: hidden; display: grid; place-items: center; border: 1px dashed var(--border); margin-bottom: 12px; }
+  .preview img { width: 100%; height: 100%; object-fit: cover; display: none; }
+  .preview span { color: var(--text2); font-size: 14px; }
+  .modal textarea { width: 100%; min-height: 80px; resize: vertical; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px; color: var(--text); font-family: inherit; font-size: 14px; }
+  .modal-foot { padding: 12px 14px; display: flex; gap: 8px; border-top: 1px solid var(--border); }
+  .btn-primary { background: var(--accent); color: white; border: 0; border-radius: 10px; padding: 10px 14px; font-weight: 600; flex: 1; cursor: pointer; }
+  .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-weight: 600; color: var(--text); cursor: pointer; }
+  input[type=file] { display: none; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">Gsocial</div>
+    <div class="top-icons">
+      <button class="icon-btn" aria-label="Notificações" onclick="alert('Notificações em breve')">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.313.75 23.935 23.935 0 005.454 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>
+      </button>
+      <button class="icon-btn" aria-label="Mensagens" onclick="alert('Mensagens em breve')">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- HOME -->
+    <section id="home-view" class="view">
+      <div class="stories" id="stories"></div>
+      <div class="feed" id="feed"></div>
+    </section>
+
+    <!-- SEARCH -->
+    <section id="search-view" class="view" hidden>
+      <div class="search-bar"><input type="search" placeholder="Buscar" oninput="filterExplore(this.value)"></div>
+      <div class="grid" id="explore-grid"></div>
+    </section>
+
+    <!-- REELS -->
+    <section id="reels-view" class="view" hidden>
+      <div class="reels" id="reels"></div>
+    </section>
+
+    <!-- PROFILE -->
+    <section id="profile-view" class="view" hidden>
+      <div class="profile-head">
+        <div class="profile-top">
+          <img src="https://picsum.photos/seed/voce/200" alt="você">
+          <div class="stats">
+            <div><strong id="stat-posts">0</strong><span>Publicações</span></div>
+            <div><strong>1.248</strong><span>Seguidores</span></div>
+            <div><strong>342</strong><span>Seguindo</span></div>
+          </div>
+        </div>
+        <div class="profile-name">Você</div>
+        <div class="profile-bio">📱 Criando com Gsocial
+☕ café e código</div>
+        <div class="profile-actions">
+          <button class="btn" onclick="alert('Editar perfil em breve')">Editar perfil</button>
+          <button class="btn" onclick="shareProfile()">Compartilhar perfil</button>
+        </div>
+      </div>
+      <div class="grid" id="profile-grid"></div>
+    </section>
+  </main>
+
+  <nav class="bottom">
+    <button class="nav-btn active" data-view="home" aria-label="Início">
+      <svg fill="currentColor" viewBox="0 0 24 24"><path d="M11.47 3.841a.75.75 0 011.06 0l8.69 8.69a.75.75 0 101.06-1.06l-8.689-8.69a2.25 2.25 0 00-3.182 0l-8.69 8.69a.75.75 0 101.061 1.06l8.69-8.69z"/><path d="M12 5.432l8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 01-.75-.75v-4.5a.75.75 0 00-.75-.75h-3a.75.75 0 00-.75.75V21a.75.75 0 01-.75.75H5.625a1.875 1.875 0 01-1.875-1.875v-6.198a2.29 2.29 0 00.091-.086L12 5.432z"/></svg>
+    </button>
+    <button class="nav-btn" data-view="search" aria-label="Buscar">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+    </button>
+    <button class="nav-btn create" data-view="create" aria-label="Criar">
+      <svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+    </button>
+    <button class="nav-btn" data-view="reels" aria-label="Reels">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z"/></svg>
+    </button>
+    <button class="nav-btn" data-view="profile" aria-label="Perfil">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+    </button>
+  </nav>
+</div>
+
+<!-- CREATE MODAL -->
+<div class="modal" id="create-modal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <span>Nova publicação</span>
+      <button class="icon-btn" onclick="closeModal()" aria-label="Fechar">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="22" height="22"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="preview" id="preview" onclick="pickImage()">
+        <img id="preview-img" alt="">
+        <span id="preview-text">Toque para selecionar foto</span>
+      </div>
+      <textarea id="caption" placeholder="Escreva uma legenda..." maxlength="2200"></textarea>
+      <input type="file" id="fileInput" accept="image/*" capture="environment">
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn-primary" id="publish-btn" disabled onclick="publishPost()">Publicar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'gsocial_posts_v1';
+const LIKES_KEY = 'gsocial_likes_v1';
+
+let posts = [];
+let likedMap = {};
+
+const defaultPosts = [
+  {
+    id: 'p1',
+    username: 'marina.silva',
+    userAvatar: 'https://picsum.photos/seed/marina/100',
+    location: 'Rio de Janeiro, Brasil',
+    image: 'https://picsum.photos/seed/post1/800/1000',
+    caption: 'Manhã perfeita na praia ☀️ Nada melhor que começar o dia com o pé na areia.',
+    likes: 1247,
+    liked: false,
+    timeAgo: 'há 2 h',
+    timestamp: Date.now() - 7200000
+  },
+  {
+    id: 'p2',
+    username: 'pedro_travel',
+    userAvatar: 'https://picsum.photos/seed/pedro/100',
+    location: 'Chapada Diamantina',
+    image: 'https://picsum.photos/seed/post2/800/1000',
+    caption: 'Trilhas que renovam a alma. Qual o próximo destino? 🏞️',
+    likes: 892,
+    liked: false,
+    timeAgo: 'há 5 h',
+    timestamp: Date.now() - 18000000
+  },
+  {
+    id: 'p3',
+    username: 'cozinha.criativa',
+    userAvatar: 'https://picsum.photos/seed/cozinha/100',
+    location: 'São Paulo, Brasil',
+    image: 'https://picsum.photos/seed/post3/800/1000',
+    caption: 'Brunch de domingo feito com amor. Receita nos comentários! 🥑🍞',
+    likes: 2156,
+    liked: false,
+    timeAgo: 'há 1 d',
+    timestamp: Date.now() - 86400000
+  }
+];
+
+const storiesData = [
+  { name: 'Seu story', avatar: 'https://picsum.photos/seed/voce/100', you: true },
+  { name: 'ana', avatar: 'https://picsum.photos/seed/ana/100' },
+  { name: 'lucas', avatar: 'https://picsum.photos/seed/lucas/100' },
+  { name: 'julia', avatar: 'https://picsum.photos/seed/julia/100' },
+  { name: 'rafa', avatar: 'https://picsum.photos/seed/rafa/100' },
+  { name: 'bia', avatar: 'https://picsum.photos/seed/bia/100' },
+  { name: 'marina', avatar: 'https://picsum.photos/seed/marina2/100' },
+  { name: 'pedro', avatar: 'https://picsum.photos/seed/pedro2/100' },
+];
+
+function loadData() {
+  try {
+    posts = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultPosts;
+    likedMap = JSON.parse(localStorage.getItem(LIKES_KEY)) || {};
+    // merge liked state
+    posts = posts.map(p => ({...p, liked: !!likedMap[p.id]}));
+    if (!localStorage.getItem(STORAGE_KEY)) savePosts();
+  } catch(e) { posts = defaultPosts; }
+}
+function savePosts() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+}
+function saveLikes() {
+  localStorage.setItem(LIKES_KEY, JSON.stringify(likedMap));
+}
+
+function renderStories() {
+  const el = document.getElementById('stories');
+  el.innerHTML = storiesData.map(s => `
+    <div class="story" onclick="alert('Stories de ${s.name} em breve')">
+      <div class="story-ring ${s.you ? 'you' : ''}">
+        <img src="${s.avatar}" alt="${s.name}" loading="lazy">
+      </div>
+      <span>${s.name}</span>
+    </div>
+  `).join('');
+}
+
+function formatLikes(n) {
+  return n.toLocaleString('pt-BR');
+}
+
+function createPostElement(p) {
+  const article = document.createElement('article');
+  article.className = 'post';
+  article.dataset.id = p.id;
+  article.innerHTML = `
+    <div class="post-head">
+      <img src="${p.userAvatar}" alt="${p.username}">
+      <div class="post-user">
+        <strong>${p.username}</strong>
+        <small>${p.location || ''}</small>
+      </div>
+      <button class="icon-btn" onclick="alert('Mais opções')" aria-label="Mais">
+        <svg fill="currentColor" viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="1.5"/><circle cx="19.5" cy="12" r="1.5"/><circle cx="4.5" cy="12" r="1.5"/></svg>
+      </button>
+    </div>
+    <div class="post-img-wrap">
+      <img class="post-img" src="${p.image}" alt="Foto de ${p.username}" loading="lazy">
+      <div class="heart-burst">
+        <svg width="90" height="90" viewBox="0 0 24 24" fill="white" stroke="white"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+      </div>
+    </div>
+    <div class="post-actions">
+      <button class="like-btn ${p.liked ? 'liked' : ''}" aria-label="Curtir" onclick="toggleLike('${p.id}')">
+        <svg fill="${p.liked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
+      </button>
+      <button aria-label="Comentar" onclick="commentPost('${p.id}')">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z"/></svg>
+      </button>
+      <button aria-label="Compartilhar" onclick="sharePost('${p.id}')">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"/></svg>
+      </button>
+      <button class="save" aria-label="Salvar" onclick="alert('Salvo!')">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"/></svg>
+      </button>
+    </div>
+    <div class="post-info">
+      <div class="likes">${formatLikes(p.likes)} curtidas</div>
+      <div class="caption"><strong>${p.username}</strong>${p.caption}</div>
+      <div class="time">${p.timeAgo}</div>
+    </div>
+  `;
+  // double tap like
+  const img = article.querySelector('.post-img');
+  let lastTap = 0;
+  img.addEventListener('click', e => {
+    const now = Date.now();
+    if (now - lastTap < 300) {
+      toggleLike(p.id, true);
+      const burst = article.querySelector('.heart-burst');
+      burst.classList.remove('show'); void burst.offsetWidth; burst.classList.add('show');
+    }
+    lastTap = now;
+  });
+  return article;
+}
+
+function renderFeed() {
+  const feed = document.getElementById('feed');
+  feed.innerHTML = '';
+  posts.sort((a,b) => b.timestamp - a.timestamp).forEach(p => {
+    feed.appendChild(createPostElement(p));
+  });
+}
+
+function toggleLike(id, fromDouble = false) {
+  const post = posts.find(p => p.id === id);
+  if (!post) return;
+  post.liked = !post.liked || fromDouble === true;
+  if (fromDouble && post.liked) { /* ensure liked */ }
+  else if (!fromDouble) { /* toggled */ }
+  // adjust count
+  if (post.liked) {
+    if (!likedMap[id]) post.likes++;
+    likedMap[id] = true;
+  } else {
+    post.likes = Math.max(0, post.likes - 1);
+    delete likedMap[id];
+  }
+  savePosts(); saveLikes();
+  // update DOM
+  const el = document.querySelector(`.post[data-id="${id}"]`);
+  if (el) {
+    el.querySelector('.like-btn').classList.toggle('liked', post.liked);
+    el.querySelector('.like-btn svg').setAttribute('fill', post.liked ? 'currentColor' : 'none');
+    el.querySelector('.likes').textContent = formatLikes(post.likes) + ' curtidas';
+  }
+}
+
+// NAV
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const view = btn.dataset.view;
+    if (view === 'create') { openModal(); return; }
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b===btn));
+    document.querySelectorAll('.view').forEach(v => v.hidden = true);
+    document.getElementById(view + '-view').hidden = false;
+    if (view === 'profile') renderProfile();
+  });
+});
+
+function renderExplore() {
+  const grid = document.getElementById('explore-grid');
+  const items = Array.from({length: 30}, (_,i) => `https://picsum.photos/seed/explore${i}/400`);
+  grid.innerHTML = items.map(src => `<img src="${src}" loading="lazy" alt="Explorar" onclick="alert('Abrir post')">`).join('');
+}
+function filterExplore(q) {
+  // simple visual filter
+  document.querySelectorAll('#explore-grid img').forEach(img => {
+    img.style.opacity = !q || img.src.includes(q) ? '1' : '.3';
+  });
+}
+
+function renderReels() {
+  const reels = document.getElementById('reels');
+  const data = [
+    {user:'ana', img:'https://picsum.photos/seed/reel1/600/1100', cap:'Pôr do sol na praia 🌅'},
+    {user:'lucas', img:'https://picsum.photos/seed/reel2/600/1100', cap:'Skate no centro #street'},
+    {user:'julia', img:'https://picsum.photos/seed/reel3/600/1100', cap:'Receita rápida em 30s'},
+  ];
+  reels.innerHTML = data.map(r => `
+    <div class="reel">
+      <img src="${r.img}" alt="">
+      <div class="reel-ui">
+        <button onclick="this.querySelector('svg').style.fill = this.querySelector('svg').style.fill ? '' : 'red'"><svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12s9-4.78 9-12z"/></svg><span>2,4k</span></button>
+        <button onclick="alert('Comentários')"><svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z"/></svg><span>128</span></button>
+        <button onclick="alert('Compartilhar')"><svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path d="M6 12L3.269 3.126A59.768 0 0121.485 12 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"/></svg></button>
+      </div>
+      <div class="reel-info"><strong>@${r.user}</strong> · ${r.cap}</div>
+    </div>
+  `).join('');
+}
+
+function renderProfile() {
+  const myPosts = posts.filter(p => p.username === 'voce');
+  document.getElementById('stat-posts').textContent = myPosts.length;
+  const grid = document.getElementById('profile-grid');
+  if (myPosts.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1; padding:40px 20px; text-align:center; color:var(--text2)">Você ainda não publicou nada.<br>Clique no + para criar.</div>`;
+  } else {
+    grid.innerHTML = myPosts.map(p => `<img src="${p.image}" alt="" loading="lazy" onclick="openPost('${p.id}')">`).join('');
+  }
+}
+
+function openPost(id) {
+  document.querySelector('[data-view="home"]').click();
+  setTimeout(() => {
+    document.querySelector(`.post[data-id="${id}"]`)?.scrollIntoView({behavior:'smooth', block:'center'});
+  }, 100);
+}
+
+function commentPost(id) {
+  const txt = prompt('Adicionar comentário:');
+  if (txt) alert('Comentário publicado: ' + txt);
+}
+function sharePost(id) {
+  if (navigator.share) {
+    navigator.share({title:'Gsocial', text:'Veja este post no Gsocial', url: location.href}).catch(()=>{});
+  } else {
+    alert('Link copiado!');
+  }
+}
+function shareProfile() {
+  alert('Perfil compartilhado!');
+}
+
+// CREATE
+const modal = document.getElementById('create-modal');
+const fileInput = document.getElementById('fileInput');
+const previewImg = document.getElementById('preview-img');
+const previewText = document.getElementById('preview-text');
+const publishBtn = document.getElementById('publish-btn');
+let selectedDataUrl = null;
+
+function openModal() {
+  modal.classList.add('show');
+  setTimeout(()=> fileInput.click(), 200);
+}
+function closeModal() {
+  modal.classList.remove('show');
+  selectedDataUrl = null;
+  previewImg.style.display = 'none';
+  previewImg.src = '';
+  previewText.style.display = 'block';
+  document.getElementById('caption').value = '';
+  publishBtn.disabled = true;
+}
+function pickImage() { fileInput.click(); }
+fileInput.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    selectedDataUrl = ev.target.result;
+    previewImg.src = selectedDataUrl;
+    previewImg.style.display = 'block';
+    previewText.style.display = 'none';
+    publishBtn.disabled = false;
+  };
+  reader.readAsDataURL(file);
+});
+function publishPost() {
+  if (!selectedDataUrl) return;
+  const caption = document.getElementById('caption').value.trim();
+  const newPost = {
+    id: 'p' + Date.now(),
+    username: 'voce',
+    userAvatar: 'https://picsum.photos/seed/voce/100',
+    location: 'São Paulo, Brasil',
+    image: selectedDataUrl,
+    caption: caption ? ' ' + caption : '',
+    likes: 0,
+    liked: false,
+    timeAgo: 'agora',
+    timestamp: Date.now()
+  };
+  posts.unshift(newPost);
+  savePosts();
+  renderFeed();
+  closeModal();
+  document.querySelector('[data-view="home"]').click();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// Init
+loadData();
+renderStories();
+renderFeed();
+renderExplore();
+renderReels();
+
+// PWA manifest
+const manifest = {
+  name: "Gsocial",
+  short_name: "Gsocial",
+  description: "Clone do Instagram mobile-first",
+  start_url: ".",
+  display: "standalone",
+  background_color: "#000000",
+  theme_color: "#ffffff",
+  icons: [
+    { src: "https://picsum.photos/seed/gsocialicon/192", sizes: "192x192", type: "image/png", purpose: "any maskable" },
+    { src: "https://picsum.photos/seed/gsocialicon/512", sizes: "512x512", type: "image/png", purpose: "any maskable" }
+  ]
+};
+const manifestBlob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+document.getElementById('manifest').href = URL.createObjectURL(manifestBlob);
+
+// Service worker
+if ('serviceWorker' in navigator) {
+  const sw = `
+    const CACHE='gsocial-v1';
+    self.addEventListener('install', e => { self.skipWaiting(); });
+    self.addEventListener('activate', e => { self.clients.claim(); });
+    self.addEventListener('fetch', e => { });
+  `;
+  const swBlob = new Blob([sw], {type:'text/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(()=>{});
+}
+</script>
+</body>
+</html>
