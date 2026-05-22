@@ -1,6 +1,25 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
+<head><!-- PLAYABLE_TOUCH_PATCH_V1 --><script>
+(function() {
+  if (window.__playableTouchPatchInstalled) return;
+  window.__playableTouchPatchInstalled = true;
+  var origAdd = EventTarget.prototype.addEventListener;
+  var blockedTypes = { touchstart: 1, touchmove: 1, wheel: 1 };
+  EventTarget.prototype.addEventListener = function(type, listener, options) {
+    if (blockedTypes[type]) {
+      if (options === undefined || options === null) {
+        options = { passive: true };
+      } else if (typeof options === 'boolean') {
+        options = { capture: options, passive: true };
+      } else {
+        options = Object.assign({}, options, { passive: true });
+      }
+    }
+    return origAdd.call(this, type, listener, options);
+  };
+})();
+</script>
 <!-- Playables SDK -->
 <script>// Playables SDK v1.0.0
 // Game lifecycle bridge: rAF-based game-ready detection + event communication
@@ -249,6 +268,10 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
         Perfil
       </button>
+      <button data-nav="premium" class="nav w-full flex items-center gap-3 px-3.5 py-3 rounded-xl hover:bg-zinc-900/80 transition">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="1.7"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        Gsocial+
+      </button>
       <button data-nav="seguranca" class="nav w-full flex items-center gap-3 px-3.5 py-3 rounded-xl hover:bg-zinc-900/80 transition">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z"/></svg>
         Segurança
@@ -434,6 +457,10 @@ const storage = getStorage(app)
 const provider = new GoogleAuthProvider()
 provider.setCustomParameters({ prompt: 'select_account' })
 
+// CONFIGURAÇÃO GSOCIAL+
+const ADMIN_UIDS = ['CTgFgaNHZVeLI2GuVSvNEL7Vr6A2', 'm4hTMtbJ3jeeUsgOZqDwFqLPIbq2'];
+const RESERVED_USERNAMES = ['neymar','neymarjr','anitta','lula','bolsonaro','messi','cristiano','virginia','whindersson','gsocial','oficial','suporte','equipe','admin','sistema','gstudio'];
+
 // UI refs
 const $ = s => document.querySelector(s)
 const sidebar = $('#sidebar')
@@ -477,6 +504,7 @@ document.querySelectorAll('.nav').forEach(b => b.onclick = () => { handleNav(b.d
 function handleNav(nav){
   if(nav==='home') window.scrollTo({top:0,behavior:'smooth'})
   if(nav==='perfil') openPerfil()
+  if(nav==='premium') openPremium()
   if(nav==='seguranca') openLegal('Segurança', segurancaHTML)
   if(nav==='termos') openLegal('Termos de Uso', termosHTML)
   if(nav==='privacidade') openLegal('Política de Privacidade', privacidadeHTML)
@@ -539,6 +567,61 @@ const sobreHTML = `
 </div>`
 function openLegal(title, html){ createModal(title, html) }
 
+function openPremium(){
+  const isPremium = currentProfile?.verified === 'premium';
+  const isOficial = currentProfile?.verified === 'oficial';
+  const premiumHTML = `
+  <div class="text-center">
+    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#a855f7]/10 border border-[#a855f7]/30 mb-6">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      <span class="text-[#d8b4fe] font-bold">GSOCIAL+</span>
+    </div>
+    <h3 class="text-3xl font-black mb-2">Seja <span class="led-text">Premium</span></h3>
+    <p class="text-zinc-400 mb-8">Destaque-se na rede brasileira</p>
+    
+    ${isOficial ? `<div class="card rounded-2xl p-6 mb-6 border-[#a855f7]"><p class="text-lg">✓ Você já tem o selo <strong class="led-text">Oficial</strong></p><p class="text-sm text-zinc-500 mt-2">Conta verificada pela equipe Gsocial</p></div>` : 
+      isPremium ? `<div class="card rounded-2xl p-6 mb-6 border-[#a855f7]"><p class="text-lg">✓ Você é <strong class="led-text">Premium</strong></p><p class="text-sm text-zinc-500 mt-2">Válido até ${currentProfile.premiumUntil?.toDate ? currentProfile.premiumUntil.toDate().toLocaleDateString('pt-BR') : 'renovação automática'}</p><button onclick="window.cancelPremium()" class="mt-4 text-sm text-zinc-500 hover:text-white">Cancelar assinatura</button></div>` :
+    `<div class="grid md:grid-cols-2 gap-4 text-left mb-8">
+      <div class="card rounded-2xl p-5"><div class="text-2xl mb-2">💜</div><strong>Selo Premium</strong><p class="text-sm text-zinc-400 mt-1">Check roxo no seu perfil</p></div>
+      <div class="card rounded-2xl p-5"><div class="text-2xl mb-2">🚀</div><strong>Alcance 3x</strong><p class="text-sm text-zinc-400 mt-1">Seus posts aparecem primeiro</p></div>
+      <div class="card rounded-2xl p-5"><div class="text-2xl mb-2">@</div><strong>@ curto</strong><p class="text-sm text-zinc-400 mt-1">Use nomes com 2 caracteres</p></div>
+      <div class="card rounded-2xl p-5"><div class="text-2xl mb-2">📸</div><strong>HD+</strong><p class="text-sm text-zinc-400 mt-1">Fotos em alta qualidade</p></div>
+    </div>
+    <div class="card rounded-[24px] p-6 glow-border">
+      <div class="flex items-baseline justify-center gap-2 mb-1"><span class="text-4xl font-black">R$9,90</span><span class="text-zinc-500">/mês</span></div>
+      <p class="text-xs text-zinc-500 mb-5">ou R$79/ano (economize 33%)</p>
+      <button onclick="window.activatePremium()" class="w-full h-12 rounded-xl bg-[#a855f7] hover:bg-[#9333ea] led-glow font-bold text-lg">Ativar Gsocial+</button>
+      <p class="text-[11px] text-zinc-600 mt-3">Pagamento seguro via Mercado Pago • Cancele quando quiser</p>
+    </div>`}
+  </div>`;
+  createModal('Gsocial+', premiumHTML);
+}
+
+window.activatePremium = async () => {
+  if(!currentUser) return;
+  const premiumUntil = new Date(Date.now() + 30*24*60*60*1000);
+  await setDoc(doc(db,'users',currentUser.uid), {
+    verified: 'premium',
+    premiumUntil: premiumUntil,
+    updatedAt: serverTimestamp()
+  }, { merge: true });
+  currentProfile.verified = 'premium';
+  currentProfile.premiumUntil = { toDate: () => premiumUntil };
+  alert('Gsocial+ ativado! Bem-vindo ao Premium 💜');
+  document.querySelector('.modal')?.remove();
+  location.reload();
+};
+
+window.cancelPremium = async () => {
+  if(!confirm('Cancelar Gsocial+?')) return;
+  await setDoc(doc(db,'users',currentUser.uid), {
+    verified: null,
+    premiumUntil: null
+  }, { merge: true });
+  alert('Assinatura cancelada');
+  location.reload();
+};
+
 // Auth
 googleLogin.onclick = async () => { try{ await signInWithPopup(auth, provider) }catch(e){ alert('Erro ao entrar: '+e.message) } }
 btnSair.onclick = () => signOut(auth)
@@ -570,12 +653,18 @@ onAuthStateChanged(auth, async (user) => {
   if(usnap.exists()){
     currentProfile = usnap.data()
   } else {
-    currentProfile = { displayName:user.displayName, photoURL:user.photoURL, username:'', bio:'' }
+    currentProfile = { displayName:user.displayName, photoURL:user.photoURL, username:'', bio:'', verified: null }
     await setDoc(uref, { ...currentProfile, createdAt: serverTimestamp() }, { merge:true })
   }
   sideUserName.textContent = currentProfile.username ? '@'+currentProfile.username : 'defina seu @'
   userHandle.textContent = currentProfile.username ? '@'+currentProfile.username : ''
   userHandle.classList.toggle('hidden', !currentProfile.username)
+  
+  // mostra selo no sidebar
+  if(currentProfile.verified){
+    const badge = currentProfile.verified==='oficial' ? '✓' : '+';
+    sideName.innerHTML = `${user.displayName || 'Usuário'} <span class="text-[#a855f7]">${badge}</span>`;
+  }
 
   if(!currentProfile.username){ openPerfil(true) }
 
@@ -615,19 +704,33 @@ modalPerfil.querySelector('[data-close]').onclick = closePerfil
 profileForm.onsubmit = async (e) => {
   e.preventDefault()
   const username = usernameInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'')
-  if(username.length<3){ alert('Usuário mínimo 3 caracteres'); return }
+  const isAdmin = ADMIN_UIDS.includes(currentUser.uid);
+  const minLength = isAdmin || currentProfile?.verified==='premium' ? 2 : 3;
+  
+  if(username.length<minLength){ alert(`Usuário mínimo ${minLength} caracteres`); return }
+  if(username.length>15){ alert('Máximo 15 caracteres'); return }
+  
+  // bloqueia reservados para não-admin
+  if (RESERVED_USERNAMES.includes(username) && !isAdmin) {
+    alert('Este @ é reservado para contas oficiais do Gsocial.');
+    return;
+  }
+
   // check unique
   const q = query(collection(db,'users'), where('username','==',username))
   const snap = await getDocs(q)
   const taken = snap.docs.find(d => d.id !== currentUser.uid)
   if(taken){ alert('Este @ já está em uso'); return }
+  
   await setDoc(doc(db,'users',currentUser.uid), {
     username,
     bio: bioInput.value.trim().slice(0,140),
     displayName: currentUser.displayName,
     photoURL: currentUser.photoURL,
+    verified: currentProfile.verified || null,
     updatedAt: serverTimestamp()
   }, { merge:true })
+  
   currentProfile.username = username
   currentProfile.bio = bioInput.value.trim()
   sideUserName.textContent = '@'+username
@@ -646,14 +749,16 @@ fileInput.onchange = () => {
 }
 removeImg.onclick = () => { selectedFile=null; fileInput.value=''; previewWrap.classList.add('hidden') }
 
-async function compressImage(file, max=720){
+async function compressImage(file, max=1080){
+  const quality = currentProfile?.verified ? 0.92 : 0.82;
+  const size = currentProfile?.verified ? 1080 : 720;
   const bmp = await createImageBitmap(file)
   let w = bmp.width, h = bmp.height
-  if(w>h){ if(w>max){ h = Math.round(h*max/w); w=max } } else { if(h>max){ w = Math.round(w*max/h); h=max } }
+  if(w>h){ if(w>size){ h = Math.round(h*size/w); w=size } } else { if(h>size){ w = Math.round(w*size/h); h=size } }
   const canvas = new OffscreenCanvas(w,h)
   const ctx = canvas.getContext('2d')
   ctx.drawImage(bmp,0,0,w,h)
-  const blob = await canvas.convertToBlob({type:'image/jpeg', quality:0.82})
+  const blob = await canvas.convertToBlob({type:'image/jpeg', quality})
   return blob
 }
 
@@ -667,7 +772,7 @@ postBtn.onclick = async () => {
     let imageURL = ''
     if(selectedFile){
       uploadProgress.classList.remove('hidden')
-      const blob = await compressImage(selectedFile, 720)
+      const blob = await compressImage(selectedFile)
       const storageRef = ref(storage, `posts/${currentUser.uid}/${Date.now()}.jpg`)
       const task = uploadBytesResumable(storageRef, blob, { contentType:'image/jpeg' })
       await new Promise((res, rej) => {
@@ -683,6 +788,7 @@ postBtn.onclick = async () => {
       name: currentUser.displayName,
       photoURL: currentUser.photoURL,
       username: currentProfile.username,
+      verified: currentProfile.verified || null,
       text,
       imageURL,
       likes: [],
@@ -700,24 +806,26 @@ function renderFeed(posts){
   feed.innerHTML = posts.map(p => {
     const hasLiked = currentUser && Array.isArray(p.likes) && p.likes.includes(currentUser.uid)
     const time = p.createdAt?.toDate ? p.createdAt.toDate().toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : 'agora'
+    const verifiedBadge = p.verified==='oficial' ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="#a855f7" class="inline"><path d="M12 0l1.8 4.1 4.5.4-3.3 3.2.8 4.5-4-2.1-4 2.1.8-4.5-3.3-3.2 4.5-.4z"/></svg>` : p.verified==='premium' ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2" class="inline"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>` : '';
     return `
     <article class="card rounded-[22px] p-4 hover:border-[#a855f7]/40 transition">
       <div class="flex gap-3">
         <img src="${p.photoURL||''}" class="w-10 h-10 rounded-full object-cover bg-zinc-800" alt="">
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-2 flex-wrap">
-            <span class="font-semibold leading-none">${p.name||'Usuário'}</span>
+            <span class="font-semibold leading-none flex items-center gap-1">${p.name||'Usuário'}${verifiedBadge}</span>
             <span class="text-[#a855f7] text-sm">@${p.username||'user'}</span>
             <span class="text-zinc-600 text-xs">• ${time}</span>
           </div>
           ${p.text ? `<p class="mt-2 whitespace-pre-wrap break-words text-[15px] leading-snug">${escapeHtml(p.text)}</p>`:''}
+          ${p.imageURL ? `<img src="${p.imageURL}" class="mt-3 w-full max-h-[520px] object-cover rounded-xl border border-zinc-900" loading="lazy">`:''}
+          <div class="mt-3 flex items-center gap-4">
+            <button data-like="${p.id}" class="group flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-zinc-900">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="${hasLiked?'#a855f7':'none'}" stroke="${hasLiked?'#a855f7':'currentColor'}" stroke-width="1.7" class="group-active:scale-110 transition"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 0 0 0 0-7.8z"/></svg>
+              <span class="text-sm text-zinc-400">${p.likes?.length||0}</span>
+            </button>
+          </div>
         </div>
-      ${p.imageURL ? `<img src="${p.imageURL}" class="mt-3 w-full max-h-[520px] object-cover rounded-xl border border-zinc-900" loading="lazy">`:''}
-      <div class="mt-3 flex items-center gap-4">
-        <button data-like="${p.id}" class="group flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-zinc-900">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="${hasLiked?'#a855f7':'none'}" stroke="${hasLiked?'#a855f7':'currentColor'}" stroke-width="1.7" class="group-active:scale-110 transition"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 0 0 0 0-7.8z"/></svg>
-          <span class="text-sm text-zinc-400">${p.likes?.length||0}</span>
-        </button>
       </div>
     </article>`
   }).join('')
